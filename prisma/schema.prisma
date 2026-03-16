@@ -1,0 +1,563 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// MULTI-TENANT BASE
+// ============================================
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  plan      Plan     @default(STARTER)
+  logo      String?
+  website   String?
+  currency  String   @default("USD")
+  timezone  String   @default("America/Mexico_City")
+  seats     Int      @default(3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  accounts      Account[]
+  contacts      Contact[]
+  deals         Deal[]
+  activities    Activity[]
+  sequences     Sequence[]
+  products      Product[]
+  quotes        Quote[]
+  transactions  Transaction[]
+  pricingConfig PricingConfig?
+  pricingRules  PricingRule[]
+  aiLogs        AiLog[]
+}
+
+enum Plan {
+  STARTER
+  GROWTH
+  SCALE
+}
+
+// ============================================
+// USERS & AUTH
+// ============================================
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  avatarUrl     String?
+  role          UserRole @default(SELLER)
+  monthlySalary Float?
+  salesTarget   Float?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  assignedAccounts Account[]  @relation("AccountOwner")
+  assignedDeals    Deal[]     @relation("DealOwner")
+  activities       Activity[] @relation("ActivityCreator")
+  assignedTasks    Activity[] @relation("TaskAssignee")
+  quotes           Quote[]
+  sequences        Sequence[]
+  aiLogs           AiLog[]
+
+  @@index([tenantId])
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  SELLER
+  VIEWER
+}
+
+// ============================================
+// ACCOUNTS & CONTACTS (B2B)
+// ============================================
+
+model Account {
+  id            String        @id @default(cuid())
+  name          String
+  industry      String?
+  segment       Segment?
+  size          String?
+  annualRevenue Float?
+  website       String?
+  phone         String?
+  address       String?
+  taxId         String?
+  status        AccountStatus @default(PROSPECT)
+  healthScore   Int?
+  tags          String[]
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  assignedToId String?
+  assignedTo   User?  @relation("AccountOwner", fields: [assignedToId], references: [id])
+  tenantId     String
+  tenant       Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  contacts     Contact[]
+  deals        Deal[]
+  activities   Activity[]
+  quotes       Quote[]
+  transactions Transaction[]
+
+  @@index([tenantId])
+  @@index([assignedToId])
+  @@index([status])
+}
+
+enum AccountStatus {
+  PROSPECT
+  ACTIVE_CLIENT
+  INACTIVE
+  CHURNED
+}
+
+enum Segment {
+  STARTUP
+  SMB
+  MIDMARKET
+  ENTERPRISE
+  GOVERNMENT
+}
+
+model Contact {
+  id        String      @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  jobTitle  String?
+  role      ContactRole @default(USER)
+  isPrimary Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  tenantId  String
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  deals      Deal[]
+  activities Activity[]
+  quotes     Quote[]
+
+  @@index([accountId])
+  @@index([tenantId])
+}
+
+enum ContactRole {
+  DECISION_MAKER
+  INFLUENCER
+  CHAMPION
+  USER
+  BLOCKER
+}
+
+// ============================================
+// DEALS (PIPELINE)
+// ============================================
+
+model Deal {
+  id                String     @id @default(cuid())
+  title             String
+  description       String?
+  stage             DealStage  @default(PROSPECTING)
+  value             Float      @default(0)
+  probability       Int        @default(10)
+  expectedCloseDate DateTime?
+  actualCloseDate   DateTime?
+  lostReason        String?
+  source            DealSource @default(INBOUND)
+  aiScore           Int?
+  aiInsights        Json?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  accountId    String
+  account      Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  contactId    String?
+  contact      Contact? @relation(fields: [contactId], references: [id])
+  assignedToId String?
+  assignedTo   User?   @relation("DealOwner", fields: [assignedToId], references: [id])
+  tenantId     String
+  tenant       Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  activities          Activity[]
+  quotes              Quote[]
+  sequenceEnrollments SequenceEnrollment[]
+  transactions        Transaction[]
+
+  @@index([tenantId])
+  @@index([accountId])
+  @@index([assignedToId])
+  @@index([stage])
+}
+
+enum DealStage {
+  PROSPECTING
+  QUALIFICATION
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum DealSource {
+  INBOUND
+  OUTBOUND
+  REFERRAL
+  EVENT
+  PARTNER
+}
+
+// ============================================
+// ACTIVITIES (Tasks, Calls, Meetings, Notes)
+// ============================================
+
+model Activity {
+  id          String           @id @default(cuid())
+  type        ActivityType
+  title       String
+  description String?
+  date        DateTime         @default(now())
+  dueDate     DateTime?
+  priority    ActivityPriority @default(MEDIUM)
+  status      ActivityStatus   @default(PENDING)
+  outcome     CallOutcome?
+  duration    Int?
+  nextFollowUp DateTime?
+  aiGenerated  Boolean         @default(false)
+  aiSummary    String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  dealId       String?
+  deal         Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  accountId    String?
+  account      Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  contactId    String?
+  contact      Contact? @relation(fields: [contactId], references: [id])
+  userId       String
+  user         User     @relation("ActivityCreator", fields: [userId], references: [id])
+  assignedToId String?
+  assignedTo   User?    @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  metadata Json?
+
+  @@index([tenantId])
+  @@index([dealId])
+  @@index([accountId])
+  @@index([userId])
+  @@index([assignedToId])
+  @@index([type])
+  @@index([status])
+  @@index([dueDate])
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  NOTE
+  TASK
+  SEQUENCE_STEP
+}
+
+enum ActivityStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+enum ActivityPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum CallOutcome {
+  CONNECTED
+  NO_ANSWER
+  VOICEMAIL
+  RESCHEDULED
+}
+
+// ============================================
+// SEQUENCES (Commercial Automation)
+// ============================================
+
+model Sequence {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  isActive     Boolean  @default(false)
+  triggerStage DealStage?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  tenantId    String
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  steps       SequenceStep[]
+  enrollments SequenceEnrollment[]
+
+  @@index([tenantId])
+}
+
+model SequenceStep {
+  id              String       @id @default(cuid())
+  order           Int
+  type            SequenceStepType
+  delayDays       Int          @default(0)
+  emailSubject    String?
+  emailTemplate   String?
+  taskDescription String?
+  aiGenerate      Boolean      @default(false)
+
+  sequenceId String
+  sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+
+  @@index([sequenceId])
+}
+
+enum SequenceStepType {
+  EMAIL
+  WAIT
+  TASK
+  CONDITION
+}
+
+model SequenceEnrollment {
+  id          String                   @id @default(cuid())
+  status      SequenceEnrollmentStatus @default(ACTIVE)
+  currentStep Int                      @default(0)
+  startedAt   DateTime                 @default(now())
+  completedAt DateTime?
+  pausedAt    DateTime?
+
+  dealId     String
+  deal       Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  sequenceId String
+  sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  tenantId   String
+
+  @@index([dealId])
+  @@index([sequenceId])
+}
+
+enum SequenceEnrollmentStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+// ============================================
+// PRODUCTS & QUOTES
+// ============================================
+
+model Product {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  sku         String?
+  basePrice   Float
+  costPrice   Float?
+  unit        ProductUnit @default(UNIT)
+  category    String?
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  quoteItems QuoteItem[]
+
+  @@index([tenantId])
+}
+
+enum ProductUnit {
+  HOUR
+  PROJECT
+  MONTH
+  UNIT
+}
+
+model Quote {
+  id        String      @id @default(cuid())
+  number    Int
+  version   Int         @default(1)
+  status    QuoteStatus @default(DRAFT)
+  validUntil DateTime?
+  subtotal  Float       @default(0)
+  taxRate   Float       @default(0)
+  taxAmount Float       @default(0)
+  discount  Float       @default(0)
+  total     Float       @default(0)
+  notes     String?
+  terms     String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  dealId      String?
+  deal        Deal?    @relation(fields: [dealId], references: [id])
+  accountId   String
+  account     Account  @relation(fields: [accountId], references: [id])
+  contactId   String?
+  contact     Contact? @relation(fields: [contactId], references: [id])
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  items QuoteItem[]
+
+  @@unique([tenantId, number])
+  @@index([tenantId])
+  @@index([accountId])
+  @@index([dealId])
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+model QuoteItem {
+  id               String @id @default(cuid())
+  description      String?
+  quantity         Float   @default(1)
+  unitPrice        Float
+  discount         Float   @default(0)
+  lineTotal        Float
+  complexityFactor Float   @default(1.0)
+  aiSuggested      Boolean @default(false)
+
+  quoteId   String
+  quote     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  @@index([quoteId])
+}
+
+// ============================================
+// PRICING ENGINE
+// ============================================
+
+model PricingConfig {
+  id                   String @id @default(cuid())
+  personalCosts        Json?
+  businessCosts        Json?
+  desiredMargin        Float  @default(30)
+  workingHoursPerMonth Int    @default(160)
+  minimumRate          Float?
+  recommendedRate      Float?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model PricingRule {
+  id                String  @id @default(cuid())
+  segment           Segment
+  multiplier        Float   @default(1.0)
+  complexityFactors Json?
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+// ============================================
+// FINANCIAL CONTROL
+// ============================================
+
+model Transaction {
+  id          String            @id @default(cuid())
+  type        TransactionType
+  category    String
+  description String?
+  amount      Float
+  date        DateTime
+  status      TransactionStatus @default(PENDING)
+  dueDate     DateTime?
+  paidDate    DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id])
+  dealId    String?
+  deal      Deal?    @relation(fields: [dealId], references: [id])
+  userId    String?
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@index([date])
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+// ============================================
+// AI LOGGING
+// ============================================
+
+model AiLog {
+  id         String   @id @default(cuid())
+  feature    String
+  input      Json?
+  output     Json?
+  tokensUsed Int?
+  model      String?
+  createdAt  DateTime @default(now())
+
+  userId   String?
+  user     User?  @relation(fields: [userId], references: [id])
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([feature])
+  @@index([createdAt])
+}
