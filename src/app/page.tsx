@@ -1,6 +1,11 @@
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
 import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
+  const session = await getSession();
+  if (session) redirect("/agenda");
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background">
       <div className="text-center space-y-6 max-w-2xl px-4">

@@ -8,7 +8,7 @@ const navigation = [
   {
     group: "EJECUTAR",
     items: [
-      { name: "Agenda", href: "/", icon: "📋" },
+      { name: "Agenda", href: "/agenda", icon: "📋" },
       { name: "Cuentas", href: "/cuentas", icon: "🏢" },
       { name: "Pipeline", href: "/deals", icon: "📊" },
       { name: "Actividades", href: "/actividades", icon: "✅" },
@@ -50,10 +50,7 @@ export function Sidebar() {
             </p>
             <ul className="space-y-1">
               {group.items.map((item) => {
-                const isActive =
-                  item.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(item.href);
+                const isActive = pathname.startsWith(item.href);
                 return (
                   <li key={item.href}>
                     <Link
