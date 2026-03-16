@@ -1,40 +1,31 @@
-# OS Comercial con IA para PYMEs — Arquitectura Completa
+# OS Comercial con IA para PYMEs — Arquitectura v3
 
-## 1. Visión del Producto
+## 1. Posicionamiento del Producto
 
-**Sistema operativo comercial modular** para PYMEs B2B que permite:
+### Qué NO somos
+- No somos "otro CRM con IA"
+- No somos un sistema genérico de contactos
+- No somos una herramienta modular donde compras piezas sueltas
 
-| Capacidad | Descripción |
-|-----------|-------------|
-| Ordenar leads | CRM liviano con pipeline visual Kanban |
-| Seguimiento automático | Recordatorios + emails generados con IA |
-| Cotizaciones base | Generador desde catálogo con export PDF |
-| Forecast simple | Dashboard con proyección de ventas |
-| Control de rentabilidad | Ingresos, gastos, margen por cliente/vendedor |
-| Pricing inteligente | Calculadora de tarifas + sugerencias IA |
+### Qué SÍ somos
+**El sistema operativo comercial para equipos de ventas B2B en LATAM.**
 
-### Modelo de Negocio SaaS
-
-El sistema se comercializa como **plataforma modular**. Cada módulo puede venderse por separado o en paquetes:
+Un solo producto que cubre el ciclo comercial completo:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                  OS COMERCIAL IA                        │
-│                  (Plataforma Base)                      │
-│  Auth · Multi-tenant · Roles · Configuración           │
-├──────────┬──────────┬──────────┬──────────┬────────────┤
-│ Módulo 1 │ Módulo 2 │ Módulo 3 │ Módulo 4 │ Módulo 5   │
-│   CRM    │  Cotiz.  │ Finanzas │ Pricing  │ IA Engine  │
-│          │          │          │          │            │
-│  FREE    │  BASIC   │  PRO     │  PRO     │  PREMIUM   │
-└──────────┴──────────┴──────────┴──────────┴────────────┘
+PROSPECCIÓN → SEGUIMIENTO → PROPUESTA → CIERRE → RENTABILIDAD
+     ↑              ↑            ↑          ↑          ↑
+    IA            IA           IA         IA         IA
+  (scoring)   (emails)    (pricing)  (forecast)  (análisis)
 ```
 
-**Planes sugeridos:**
-- **Free**: CRM básico (hasta 50 leads)
-- **Starter ($29/mes)**: CRM + Cotizaciones
-- **Pro ($79/mes)**: + Control Financiero + Pricing
-- **Premium ($149/mes)**: Todo + IA Engine completo
+La IA no es un módulo aparte — está integrada en cada paso del proceso comercial.
+
+### Diferenciadores clave
+1. **B2B-first**: Cuentas con múltiples contactos, ciclos largos, deals complejos
+2. **IA nativa**: No es un add-on, es parte del flujo desde el día 1
+3. **LATAM-ready**: Español nativo, monedas locales, lógica fiscal regional
+4. **Ciclo completo**: De la prospección a la rentabilidad en un solo sistema
 
 ---
 
@@ -48,346 +39,502 @@ El sistema se comercializa como **plataforma modular**. Cada módulo puede vende
 | **Base de datos** | PostgreSQL (via Supabase) | Relacional, RLS nativo, auth incluido |
 | **ORM** | Prisma | Type-safe, migraciones automáticas |
 | **Autenticación** | Supabase Auth | Multi-tenant, OAuth, magic links |
-| **IA** | Anthropic Claude API | Superior en español y texto largo |
+| **IA** | Anthropic Claude API | Superior en español, contexto largo |
 | **Charts** | Recharts | Ligero, declarativo, React nativo |
-| **Email** | Resend | API moderna, fácil de integrar |
+| **Email** | Resend | API moderna, envío transaccional |
 | **PDF** | @react-pdf/renderer | Funciona en serverless |
 | **Validación** | Zod | Schemas compartidos front/back |
 | **Drag & Drop** | @dnd-kit | Ligero, accesible, para Kanban |
+| **CRON/Jobs** | Vercel Cron + Inngest | Secuencias automáticas, recordatorios |
 | **Deploy** | Vercel | Zero-config, preview deploys |
 | **Storage** | Supabase Storage | PDFs, archivos adjuntos |
 
-### Principios de Stack
-- **Monolito modular** → un proyecto, módulos desacoplados por carpeta
+### Principios
+- **Monolito modular** → un proyecto, un deploy, módulos por carpeta
 - **TypeScript end-to-end** → tipos compartidos DB ↔ API ↔ UI
-- **Feature flags por tenant** → cada empresa activa solo los módulos de su plan
+- **IA como infraestructura** → Claude API disponible en todo el stack
 - **Sin microservicios** → innecesario para MVP, fácil de extraer después
 
 ---
 
-## 3. Diseño Modular del Sistema
+## 3. Diseño de Módulos (Rediseñado)
 
-### 3.1 Plataforma Base (Core)
-
-**Auth & Multi-tenancy** — siempre incluido
-- Registro/login por empresa (tenant)
-- Roles: `ADMIN` | `SELLER` | `VIEWER`
-- Row Level Security: cada empresa ve solo sus datos
-- Middleware de permisos por módulo activo
-- Gestión de suscripción/plan
+### Cambio fundamental: de "módulos sueltos" a "sistema integrado"
 
 ```
-Lógica multi-tenant:
-┌────────────────────────────────┐
-│  Request llega                 │
-│  → Middleware auth             │
-│  → Extraer tenantId del token  │
-│  → Verificar módulos activos   │
-│  → Inyectar tenantId en query  │
-│  → RLS en PostgreSQL           │
-└────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    OS COMERCIAL IA                          │
+│              (Todo incluido, planes por escala)             │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              PLATAFORMA BASE (CORE)                 │   │
+│  │  Auth · Multi-tenant · Roles · Configuración · IA   │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  ┌───────────┐ ┌──────────────┐ ┌────────────────────┐    │
+│  │  VENDER   │ │  COTIZAR     │ │  CONTROLAR         │    │
+│  │           │ │              │ │                    │    │
+│  │ Cuentas   │ │ Catálogo     │ │ Dashboard Fin.    │    │
+│  │ Contactos │ │ Cotizaciones │ │ Rentabilidad      │    │
+│  │ Pipeline  │ │ PDF Export   │ │ Forecast          │    │
+│  │ Seguim.   │ │ Pricing Int. │ │ Cuentas x Cobrar  │    │
+│  │ Secuencias│ │ Simulador    │ │ Por vendedor      │    │
+│  └───────────┘ └──────────────┘ └────────────────────┘    │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              CAPA IA (TRANSVERSAL)                  │   │
+│  │  Emails · Scoring · Pricing · Insights · Resúmenes │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
 ```
-
-### 3.2 Módulo CRM (Gestión de Leads)
-
-| Feature | Descripción |
-|---------|-------------|
-| CRUD Leads | Crear, editar, eliminar contactos/empresas |
-| Pipeline Kanban | Drag & drop: Nuevo → Contactado → Propuesta → Negociación → Ganado/Perdido |
-| Timeline | Historial de actividades (llamadas, emails, reuniones, notas) |
-| Seguimiento | Recordatorios automáticos de próximo contacto |
-| Etiquetas | Categorización libre por tags |
-| Import CSV | Carga masiva de leads |
-| Filtros | Por etapa, vendedor, fecha, valor, tags |
-
-### 3.3 Módulo Cotizaciones
-
-| Feature | Descripción |
-|---------|-------------|
-| Catálogo | CRUD de productos/servicios con precio base |
-| Generador | Seleccionar items, cantidades, descuentos |
-| Preview | Vista previa en pantalla con branding empresa |
-| Export PDF | Generación de PDF profesional |
-| Estados | Borrador → Enviada → Aceptada → Rechazada |
-| Historial | Versiones de cotización por lead |
-
-### 3.4 Módulo Control Financiero Comercial (Producto Independiente)
-
-**Fase 1 — MVP:**
-
-| Feature | Descripción |
-|---------|-------------|
-| Dashboard financiero | Ingresos vs gastos, utilidad mensual |
-| Control mensual | Vista mes a mes con comparativo |
-| Cuentas por cobrar | Facturas pendientes, días de mora |
-| Métricas operativas | Ticket promedio, ciclo de venta |
-| Control por cliente | Ingresos/gastos desglosados por cliente |
-| Control por proyecto | Rentabilidad por proyecto/deal |
-
-**Fase 2 — Evolución:**
-
-| Feature | Descripción |
-|---------|-------------|
-| Rentabilidad por vendedor | Margen neto generado por cada vendedor |
-| Rentabilidad por cliente | LTV, costo de adquisición, margen por cliente |
-| Forecast financiero | Proyección de ingresos basada en pipeline + histórico |
-
-### 3.5 Módulo Calculadora Inteligente de Precios (Producto Independiente)
-
-**Fase 1 — MVP:**
-
-| Feature | Descripción |
-|---------|-------------|
-| Costos personales | Registro de gastos fijos del profesional/equipo |
-| Costos de negocio | Gastos operativos, herramientas, infra |
-| Tarifa mínima | Cálculo automático del piso de precio |
-| Tarifa recomendada | Precio sugerido con margen deseado |
-| Simulador | "Si cobro X por Y horas, mi margen es Z%" |
-| Auto-pricing | Cálculo automático para nuevas cotizaciones |
-
-**Fase 2 — Evolución:**
-
-| Feature | Descripción |
-|---------|-------------|
-| Pricing por segmento | Tarifas diferenciadas por tipo de cliente (startup, enterprise, gobierno) |
-| Pricing por complejidad | Factores de complejidad que ajustan precio |
-| Sugerencias IA | Claude analiza historial y sugiere precio óptimo |
-
-### 3.6 Módulo IA Engine
-
-| Feature | Descripción |
-|---------|-------------|
-| Emails de seguimiento | Generación de emails personalizados por contexto del lead |
-| Lead scoring | Probabilidad de cierre basada en actividad e historial |
-| Sugerencia de productos | Recomendar items para cotización según perfil |
-| Resumen de reuniones | Extraer acción items de notas de reunión |
-| Pricing IA | Sugerir precio óptimo basado en datos históricos |
-| Próxima acción | Recomendar qué hacer con cada lead |
 
 ---
 
-## 4. Modelo de Datos
+### 3.1 CORE — Plataforma Base
+
+**Auth & Multi-tenancy** — siempre incluido
+- Registro por empresa (tenant)
+- Roles: `ADMIN` | `MANAGER` | `SELLER` | `VIEWER`
+- Row Level Security por tenantId
+- Onboarding guiado (wizard de setup)
 
 ```
-Tenant (empresa/organización)
-├── id, name, slug, plan (FREE|STARTER|PRO|PREMIUM)
-├── activeModules[] (CRM, QUOTES, FINANCE, PRICING, AI)
-├── branding (logo, colors)
+Flujo multi-tenant:
+Request → Auth middleware → tenantId del JWT
+  → Verificar plan/límites → Inyectar en queries
+  → RLS PostgreSQL filtra automáticamente
+```
+
+### 3.2 MÓDULO: VENDER (Motor Comercial B2B)
+
+Este es el corazón del sistema. **No es un CRM — es un motor de ventas B2B.**
+
+#### Cuentas (Account-Based)
+| Feature | Descripción |
+|---------|-------------|
+| Cuentas (empresas) | Entidad principal. Una empresa = una cuenta |
+| Múltiples contactos | Cada cuenta tiene N contactos con roles (decisor, influenciador, usuario, champion) |
+| Perfil de cuenta | Industria, tamaño, segmento, revenue estimado |
+| Health score | Indicador de salud de la relación (IA) |
+
+#### Pipeline de Oportunidades
+| Feature | Descripción |
+|---------|-------------|
+| Oportunidades (Deals) | Cada deal tiene monto, probabilidad, fecha estimada de cierre |
+| Pipeline Kanban | Prospección → Calificación → Propuesta → Negociación → Cierre (Ganado/Perdido) |
+| Múltiples deals por cuenta | Una cuenta puede tener varios deals en paralelo |
+| Razón de pérdida | Tracking de por qué se pierden deals |
+| Weighted pipeline | Valor ponderado = monto × probabilidad |
+
+#### Seguimiento Inteligente (IA desde día 1)
+| Feature | Descripción |
+|---------|-------------|
+| Timeline | Historial completo: llamadas, emails, reuniones, notas |
+| Recordatorios inteligentes | IA sugiere cuándo y cómo hacer follow-up |
+| Secuencias comerciales | Cadenas automáticas: email día 1 → reminder día 3 → llamada día 7 |
+| Emails IA | Generación de emails personalizados según contexto del deal |
+| Resumen de reuniones | Pegar notas → IA extrae action items y próximos pasos |
+| Sugerencia de próxima acción | "Este deal lleva 5 días sin actividad. Sugiero: [acción]" |
+
+### 3.3 MÓDULO: COTIZAR (Propuestas + Pricing Inteligente)
+
+#### Cotizaciones
+| Feature | Descripción |
+|---------|-------------|
+| Catálogo de productos/servicios | CRUD con precio base, costo, unidad |
+| Constructor de cotizaciones | Items, cantidades, descuentos por línea |
+| Preview con branding | Vista previa con logo y colores de la empresa |
+| Export PDF profesional | Generación automática |
+| Estados | Borrador → Enviada → Aceptada → Rechazada → Expirada |
+| Vinculación a deal | Cada cotización asociada a un deal/cuenta |
+| Versionado | v1, v2, v3 de la misma cotización |
+
+#### Pricing Inteligente (integrado, no separado)
+| Feature | Descripción |
+|---------|-------------|
+| Costos base | Costos del equipo + operativos + herramientas |
+| Tarifa mínima/recomendada | Cálculo automático del piso y precio sugerido |
+| Simulador de proyectos | "Si cobro X por Y horas, mi margen es Z%" |
+| Pricing por segmento | Multiplicadores por tipo de cliente (startup ×0.8, enterprise ×1.5) |
+| Pricing por complejidad | Factores que ajustan precio automáticamente |
+| Sugerencias IA | "Para este tipo de cliente y proyecto, el precio óptimo es $X" |
+
+### 3.4 MÓDULO: CONTROLAR (Finanzas + Forecast)
+
+#### Control Financiero
+| Feature | Descripción |
+|---------|-------------|
+| Dashboard financiero | Ingresos vs gastos, utilidad, margen mensual |
+| Control mensual | Comparativo mes a mes, tendencia |
+| Cuentas por cobrar | Facturas pendientes, días de mora, alertas |
+| Por cliente | Revenue, costo, margen por cada cuenta |
+| Por vendedor | Revenue generado, margen neto, comisiones |
+| Por proyecto/deal | Rentabilidad real vs cotizada |
+
+#### Forecast Serio
+| Feature | Descripción |
+|---------|-------------|
+| Pipeline forecast | Proyección basada en etapa × probabilidad × monto |
+| Forecast por vendedor | Cada vendedor tiene su proyección |
+| Forecast mensual/trimestral | Vista temporal con comparativo histórico |
+| Forecast financiero | Proyección de ingresos + gastos basada en pipeline + tendencia |
+| Confianza del forecast | IA indica qué tan confiable es la proyección |
+| Embudo visual | Conversión por etapa, velocidad del pipeline |
+
+### 3.5 CAPA IA (Transversal — NO es módulo separado)
+
+La IA está embebida en toda la plataforma:
+
+```
+┌─────────────────────────────────────────────────┐
+│              DÓNDE ACTÚA LA IA                  │
+├──────────────┬──────────────────────────────────┤
+│ En VENDER    │ • Lead/account scoring           │
+│              │ • Emails de seguimiento           │
+│              │ • Secuencias automáticas           │
+│              │ • Resumen de reuniones             │
+│              │ • Sugerencia de próxima acción     │
+│              │ • Health score de cuenta            │
+├──────────────┼──────────────────────────────────┤
+│ En COTIZAR   │ • Sugerencia de precio óptimo     │
+│              │ • Productos complementarios        │
+│              │ • Ajuste por segmento/complejidad  │
+├──────────────┼──────────────────────────────────┤
+│ En CONTROLAR │ • Confianza del forecast          │
+│              │ • Alertas de riesgo               │
+│              │ • Insights de rentabilidad        │
+│              │ • Anomalías en cobros             │
+└──────────────┴──────────────────────────────────┘
+```
+
+---
+
+## 4. Modelo de Datos (B2B-First)
+
+```
+Tenant (organización que usa el sistema)
+├── id, name, slug, plan (STARTER|GROWTH|SCALE)
+├── branding (logo, colors, companyInfo)
+├── settings (timezone, currency, fiscalConfig)
+├── seats (número de usuarios contratados)
 ├── createdAt, updatedAt
 │
-├── User (usuarios)
+├── User (usuarios del sistema)
 │   ├── id, email, name, avatarUrl
-│   ├── role (ADMIN|SELLER|VIEWER)
+│   ├── role (ADMIN|MANAGER|SELLER|VIEWER)
+│   ├── monthlySalary (para rentabilidad por vendedor)
+│   ├── salesTarget (meta mensual de ventas)
 │   ├── tenantId (FK)
-│   └── monthlySalary (para cálculo rentabilidad)
+│   └── isActive
 │
-├── Lead (leads/prospectos)
-│   ├── id, company, contactName, email, phone
-│   ├── stage (NEW|CONTACTED|PROPOSAL|NEGOTIATION|WON|LOST)
-│   ├── value (monto estimado en $)
-│   ├── probability (0-100%)
-│   ├── source (WEB|REFERRAL|COLD|EVENT|OTHER)
-│   ├── segment (STARTUP|SMB|ENTERPRISE|GOVERNMENT)
+├── Account (cuentas / empresas prospecto-cliente) ← ANTES: Lead
+│   ├── id, name (razón social)
+│   ├── industry, segment (STARTUP|SMB|MIDMARKET|ENTERPRISE|GOVERNMENT)
+│   ├── size (número de empleados estimado)
+│   ├── annualRevenue (revenue estimado de la cuenta)
+│   ├── website, phone, address, taxId (RFC/RUT/NIT)
+│   ├── status (PROSPECT|ACTIVE_CLIENT|INACTIVE|CHURNED)
+│   ├── healthScore (0-100, calculado por IA)
 │   ├── tags[], notes
-│   ├── nextFollowUp (date)
-│   ├── wonAt, lostAt, lostReason
-│   ├── assignedToId → User
+│   ├── assignedToId → User (account owner)
 │   └── tenantId (FK)
 │
-├── Activity (timeline)
-│   ├── id, type (CALL|EMAIL|MEETING|NOTE|TASK)
-│   ├── title, description, date
-│   ├── leadId (FK), userId (FK)
-│   └── metadata (JSON) — datos extra flexibles
+├── Contact (contactos de una cuenta) ← NUEVO: múltiples por empresa
+│   ├── id, firstName, lastName, email, phone, jobTitle
+│   ├── role (DECISION_MAKER|INFLUENCER|CHAMPION|USER|BLOCKER)
+│   ├── isPrimary (contacto principal)
+│   ├── accountId (FK)
+│   └── tenantId (FK)
 │
-├── Product (catálogo)
+├── Deal (oportunidades de venta) ← ANTES: Lead con stage
+│   ├── id, title, description
+│   ├── stage (PROSPECTING|QUALIFICATION|PROPOSAL|NEGOTIATION|CLOSED_WON|CLOSED_LOST)
+│   ├── value (monto del deal en $)
+│   ├── probability (0-100%, auto-ajustada por etapa)
+│   ├── expectedCloseDate
+│   ├── actualCloseDate
+│   ├── lostReason (si aplica)
+│   ├── source (INBOUND|OUTBOUND|REFERRAL|EVENT|PARTNER)
+│   ├── aiScore (scoring calculado por IA)
+│   ├── aiInsights (JSON — sugerencias de IA)
+│   ├── accountId (FK) → una cuenta puede tener N deals
+│   ├── contactId (FK) → contacto principal del deal
+│   ├── assignedToId → User (vendedor)
+│   └── tenantId (FK)
+│
+├── Activity (timeline de interacciones)
+│   ├── id, type (CALL|EMAIL|MEETING|NOTE|TASK|SEQUENCE_STEP)
+│   ├── title, description, date
+│   ├── outcome (COMPLETED|NO_ANSWER|RESCHEDULED|CANCELLED)
+│   ├── nextFollowUp (date)
+│   ├── aiGenerated (boolean — ¿fue generada por IA?)
+│   ├── dealId (FK, opcional), accountId (FK), contactId (FK, opcional)
+│   ├── userId (FK)
+│   └── metadata (JSON)
+│
+├── Sequence (secuencias comerciales automáticas) ← NUEVO
+│   ├── id, name, description
+│   ├── isActive, triggerStage (en qué etapa se activa)
+│   ├── tenantId (FK)
+│   └── createdById → User
+│
+├── SequenceStep (pasos de una secuencia) ← NUEVO
+│   ├── id, order, type (EMAIL|WAIT|TASK|CONDITION)
+│   ├── delayDays (esperar N días antes de ejecutar)
+│   ├── emailTemplate (plantilla con variables)
+│   ├── taskDescription
+│   ├── sequenceId (FK)
+│   └── aiGenerate (boolean — IA genera contenido dinámico)
+│
+├── SequenceEnrollment (deals inscritos en secuencia) ← NUEVO
+│   ├── id, status (ACTIVE|PAUSED|COMPLETED|CANCELLED)
+│   ├── currentStep, startedAt, completedAt
+│   ├── dealId (FK), sequenceId (FK)
+│   └── tenantId (FK)
+│
+├── Product (catálogo de productos/servicios)
 │   ├── id, name, description, sku
-│   ├── basePrice, unit (HOUR|PROJECT|MONTH|UNIT)
-│   ├── costPrice (costo real para margen)
+│   ├── basePrice, costPrice, unit (HOUR|PROJECT|MONTH|UNIT)
 │   ├── category, isActive
 │   └── tenantId (FK)
 │
 ├── Quote (cotización)
-│   ├── id, number (auto-incremental por tenant)
+│   ├── id, number (auto-incremental por tenant), version
 │   ├── status (DRAFT|SENT|ACCEPTED|REJECTED|EXPIRED)
-│   ├── validUntil, subtotal, taxRate, taxAmount, total
+│   ├── validUntil, subtotal, taxRate, taxAmount, discount, total
 │   ├── notes, terms
-│   ├── leadId (FK), createdById → User
+│   ├── dealId (FK), accountId (FK), contactId (FK)
+│   ├── createdById → User
 │   └── tenantId (FK)
 │
 ├── QuoteItem (líneas de cotización)
 │   ├── id, description, quantity, unitPrice
 │   ├── discount (%), lineTotal
+│   ├── complexityFactor (1.0 default)
 │   ├── quoteId (FK), productId (FK)
-│   └── complexityFactor (1.0 default, para pricing)
+│   └── aiSuggested (boolean)
 │
-├── Transaction (ingresos/gastos) — Módulo Financiero
-│   ├── id, type (INCOME|EXPENSE)
-│   ├── category, description, amount, date
-│   ├── status (PENDING|PAID|OVERDUE)
-│   ├── dueDate (para cuentas por cobrar)
-│   ├── leadId (FK, opcional), projectName
-│   ├── userId (FK, vendedor asociado)
-│   └── tenantId (FK)
-│
-├── PricingConfig (configuración pricing) — Módulo Pricing
+├── PricingConfig (configuración de pricing del tenant)
 │   ├── id, personalCosts (JSON), businessCosts (JSON)
 │   ├── desiredMargin (%), workingHoursPerMonth
 │   ├── minimumRate, recommendedRate
 │   └── tenantId (FK)
 │
 ├── PricingRule (reglas por segmento)
-│   ├── id, segment (STARTUP|SMB|ENTERPRISE|GOVERNMENT)
-│   ├── multiplier (ej: 1.5 para enterprise)
-│   ├── complexityFactors (JSON)
+│   ├── id, segment, multiplier, complexityFactors (JSON)
 │   └── tenantId (FK)
 │
-└── ModuleConfig (configuración por módulo)
-    ├── id, module (CRM|QUOTES|FINANCE|PRICING|AI)
-    ├── enabled (boolean)
-    ├── settings (JSON) — config específica del módulo
+├── Transaction (movimientos financieros)
+│   ├── id, type (INCOME|EXPENSE)
+│   ├── category, description, amount, date
+│   ├── status (PENDING|PAID|OVERDUE|CANCELLED)
+│   ├── dueDate, paidDate
+│   ├── accountId (FK, opcional), dealId (FK, opcional)
+│   ├── userId (FK — vendedor asociado)
+│   └── tenantId (FK)
+│
+└── AiLog (registro de uso de IA para billing/debug) ← NUEVO
+    ├── id, feature (EMAIL|SCORING|PRICING|INSIGHT|SUMMARY)
+    ├── input (JSON), output (JSON)
+    ├── tokensUsed, model
+    ├── userId (FK)
     └── tenantId (FK)
 ```
 
+### Cambios clave vs versión anterior:
+- **Account** reemplaza Lead como entidad central (B2B)
+- **Contact** separado — múltiples contactos por empresa con roles
+- **Deal** separado de Account — una cuenta puede tener N oportunidades
+- **Sequence** + Steps + Enrollment — automatización de seguimiento
+- **AiLog** — tracking de uso de IA para control de costos
+- Campos de IA integrados en Deal (aiScore, aiInsights)
+
 ---
 
-## 5. Estructura de Carpetas
+## 5. Estructura de Carpetas (Actualizada)
 
 ```
 os-comercial-ia-pymes/
 ├── prisma/
-│   ├── schema.prisma              # Todos los modelos
-│   ├── seed.ts                    # Datos demo
+│   ├── schema.prisma
+│   ├── seed.ts                        # Datos demo realistas B2B
 │   └── migrations/
 │
 ├── src/
-│   ├── app/                       # Next.js App Router
-│   │   ├── (auth)/                # === Rutas públicas ===
+│   ├── app/
+│   │   ├── (auth)/                    # === RUTAS PÚBLICAS ===
 │   │   │   ├── login/page.tsx
 │   │   │   ├── register/page.tsx
 │   │   │   └── layout.tsx
 │   │   │
-│   │   ├── (dashboard)/           # === Rutas protegidas ===
-│   │   │   ├── layout.tsx         # Sidebar + header + module guard
-│   │   │   ├── page.tsx           # Dashboard principal (resumen)
+│   │   ├── (dashboard)/               # === RUTAS PROTEGIDAS ===
+│   │   │   ├── layout.tsx             # Sidebar + header
+│   │   │   ├── page.tsx               # Dashboard ejecutivo
 │   │   │   │
-│   │   │   ├── leads/             # ── Módulo CRM ──
-│   │   │   │   ├── page.tsx               # Lista/tabla de leads
-│   │   │   │   ├── [id]/page.tsx          # Detalle + timeline
-│   │   │   │   └── pipeline/page.tsx      # Vista Kanban
+│   │   │   ├── cuentas/               # ── VENDER: Cuentas ──
+│   │   │   │   ├── page.tsx                   # Lista de cuentas
+│   │   │   │   └── [id]/
+│   │   │   │       ├── page.tsx               # Detalle cuenta
+│   │   │   │       ├── contactos/page.tsx     # Contactos de la cuenta
+│   │   │   │       └── deals/page.tsx         # Deals de la cuenta
 │   │   │   │
-│   │   │   ├── cotizaciones/      # ── Módulo Cotizaciones ──
-│   │   │   │   ├── page.tsx               # Lista
-│   │   │   │   ├── nueva/page.tsx         # Crear/editar
-│   │   │   │   └── [id]/page.tsx          # Preview + PDF
+│   │   │   ├── deals/                 # ── VENDER: Pipeline ──
+│   │   │   │   ├── page.tsx                   # Pipeline Kanban
+│   │   │   │   └── [id]/page.tsx              # Detalle deal + timeline
 │   │   │   │
-│   │   │   ├── productos/         # ── Catálogo ──
+│   │   │   ├── seguimiento/           # ── VENDER: Seguimiento ──
+│   │   │   │   ├── page.tsx                   # Tareas pendientes hoy
+│   │   │   │   └── secuencias/page.tsx        # Gestión de secuencias
+│   │   │   │
+│   │   │   ├── cotizaciones/          # ── COTIZAR ──
+│   │   │   │   ├── page.tsx                   # Lista
+│   │   │   │   ├── nueva/page.tsx             # Crear/editar
+│   │   │   │   └── [id]/page.tsx              # Preview + PDF
+│   │   │   │
+│   │   │   ├── productos/             # ── COTIZAR: Catálogo ──
 │   │   │   │   └── page.tsx
 │   │   │   │
-│   │   │   ├── finanzas/          # ── Módulo Financiero ──
-│   │   │   │   ├── page.tsx               # Dashboard financiero
-│   │   │   │   ├── transacciones/page.tsx # CRUD ingresos/gastos
-│   │   │   │   ├── cobrar/page.tsx        # Cuentas por cobrar
-│   │   │   │   └── rentabilidad/page.tsx  # Por vendedor/cliente
+│   │   │   ├── pricing/               # ── COTIZAR: Pricing ──
+│   │   │   │   ├── page.tsx                   # Dashboard + tarifas
+│   │   │   │   └── simulador/page.tsx         # Simulador proyectos
 │   │   │   │
-│   │   │   ├── pricing/           # ── Módulo Pricing ──
-│   │   │   │   ├── page.tsx               # Dashboard pricing
-│   │   │   │   ├── calculadora/page.tsx   # Calculadora de tarifas
-│   │   │   │   ├── simulador/page.tsx     # Simulador de proyectos
-│   │   │   │   └── reglas/page.tsx        # Reglas por segmento
+│   │   │   ├── finanzas/              # ── CONTROLAR ──
+│   │   │   │   ├── page.tsx                   # Dashboard financiero
+│   │   │   │   ├── transacciones/page.tsx     # CRUD ingresos/gastos
+│   │   │   │   ├── cobrar/page.tsx            # Cuentas por cobrar
+│   │   │   │   └── rentabilidad/page.tsx      # Por vendedor/cliente
 │   │   │   │
-│   │   │   ├── forecast/          # ── Forecast ──
-│   │   │   │   └── page.tsx
+│   │   │   ├── forecast/              # ── CONTROLAR: Forecast ──
+│   │   │   │   └── page.tsx                   # Forecast completo
 │   │   │   │
-│   │   │   └── configuracion/     # ── Settings ──
-│   │   │       ├── page.tsx               # General
-│   │   │       ├── equipo/page.tsx        # Gestión usuarios
-│   │   │       ├── modulos/page.tsx       # Activar/desactivar módulos
-│   │   │       └── plan/page.tsx          # Suscripción/billing
+│   │   │   └── configuracion/         # ── SETTINGS ──
+│   │   │       ├── page.tsx                   # General
+│   │   │       ├── equipo/page.tsx            # Usuarios + roles
+│   │   │       └── plan/page.tsx              # Suscripción
 │   │   │
-│   │   ├── api/                   # === API Routes ===
-│   │   │   ├── leads/route.ts
-│   │   │   ├── cotizaciones/route.ts
-│   │   │   ├── productos/route.ts
-│   │   │   ├── transacciones/route.ts
+│   │   ├── api/                       # === API ROUTES ===
+│   │   │   ├── accounts/route.ts
+│   │   │   ├── accounts/[id]/contacts/route.ts
+│   │   │   ├── deals/route.ts
+│   │   │   ├── activities/route.ts
+│   │   │   ├── sequences/route.ts
+│   │   │   ├── quotes/route.ts
+│   │   │   ├── products/route.ts
+│   │   │   ├── transactions/route.ts
 │   │   │   ├── pricing/route.ts
+│   │   │   ├── forecast/route.ts
 │   │   │   ├── ai/
 │   │   │   │   ├── generate-email/route.ts
-│   │   │   │   ├── lead-scoring/route.ts
-│   │   │   │   ├── suggest-products/route.ts
-│   │   │   │   └── suggest-price/route.ts
+│   │   │   │   ├── score-deal/route.ts
+│   │   │   │   ├── suggest-price/route.ts
+│   │   │   │   ├── summarize-meeting/route.ts
+│   │   │   │   ├── suggest-action/route.ts
+│   │   │   │   └── account-insights/route.ts
+│   │   │   ├── cron/
+│   │   │   │   ├── run-sequences/route.ts     # Ejecutar secuencias
+│   │   │   │   └── send-reminders/route.ts    # Enviar recordatorios
 │   │   │   └── webhooks/
 │   │   │       └── stripe/route.ts
 │   │   │
 │   │   ├── globals.css
-│   │   └── layout.tsx             # Root layout
+│   │   └── layout.tsx
 │   │
 │   ├── components/
-│   │   ├── ui/                    # shadcn/ui (button, card, dialog, etc.)
+│   │   ├── ui/                        # shadcn/ui base
 │   │   │
-│   │   ├── leads/                 # Componentes CRM
-│   │   │   ├── lead-card.tsx
-│   │   │   ├── lead-form.tsx
-│   │   │   ├── lead-pipeline.tsx
-│   │   │   ├── lead-timeline.tsx
-│   │   │   └── lead-filters.tsx
+│   │   ├── accounts/                  # Componentes de Cuentas
+│   │   │   ├── account-card.tsx
+│   │   │   ├── account-form.tsx
+│   │   │   ├── contact-list.tsx
+│   │   │   └── account-health.tsx     # Health score visual
 │   │   │
-│   │   ├── cotizaciones/          # Componentes Cotizaciones
+│   │   ├── deals/                     # Componentes de Deals
+│   │   │   ├── deal-card.tsx
+│   │   │   ├── deal-form.tsx
+│   │   │   ├── deal-pipeline.tsx      # Kanban
+│   │   │   ├── deal-timeline.tsx
+│   │   │   └── deal-ai-panel.tsx      # Panel IA: score, sugerencias
+│   │   │
+│   │   ├── seguimiento/              # Componentes de Seguimiento
+│   │   │   ├── activity-form.tsx
+│   │   │   ├── sequence-builder.tsx
+│   │   │   ├── reminder-list.tsx
+│   │   │   └── ai-email-composer.tsx  # Compositor de emails con IA
+│   │   │
+│   │   ├── cotizaciones/
 │   │   │   ├── cotizacion-form.tsx
 │   │   │   ├── cotizacion-preview.tsx
 │   │   │   ├── cotizacion-pdf.tsx
 │   │   │   └── item-selector.tsx
 │   │   │
-│   │   ├── finanzas/              # Componentes Financieros
+│   │   ├── pricing/
+│   │   │   ├── cost-form.tsx
+│   │   │   ├── rate-calculator.tsx
+│   │   │   ├── project-simulator.tsx
+│   │   │   └── ai-price-suggestion.tsx
+│   │   │
+│   │   ├── finanzas/
 │   │   │   ├── transaction-form.tsx
 │   │   │   ├── finance-dashboard.tsx
 │   │   │   ├── cobrar-table.tsx
 │   │   │   └── rentabilidad-charts.tsx
 │   │   │
-│   │   ├── pricing/               # Componentes Pricing
-│   │   │   ├── cost-form.tsx
-│   │   │   ├── rate-calculator.tsx
-│   │   │   ├── project-simulator.tsx
-│   │   │   └── segment-rules.tsx
-│   │   │
-│   │   ├── forecast/              # Componentes Forecast
+│   │   ├── forecast/
+│   │   │   ├── pipeline-forecast.tsx
+│   │   │   ├── revenue-forecast.tsx
 │   │   │   ├── funnel-chart.tsx
-│   │   │   ├── forecast-chart.tsx
 │   │   │   └── kpi-card.tsx
 │   │   │
-│   │   └── shared/                # Componentes compartidos
+│   │   ├── ai/                        # Componentes IA compartidos
+│   │   │   ├── ai-assistant-panel.tsx  # Panel lateral IA
+│   │   │   ├── ai-suggestion.tsx      # Card de sugerencia
+│   │   │   └── ai-loading.tsx         # Estado de carga IA
+│   │   │
+│   │   └── shared/
 │   │       ├── sidebar.tsx
 │   │       ├── header.tsx
 │   │       ├── data-table.tsx
 │   │       ├── empty-state.tsx
-│   │       ├── module-guard.tsx   # Gate por módulo activo
 │   │       └── stat-card.tsx
 │   │
 │   ├── lib/
-│   │   ├── db.ts                  # Prisma client singleton
-│   │   ├── auth.ts                # Auth helpers + middleware
-│   │   ├── ai.ts                  # Claude API client
-│   │   ├── email.ts               # Resend client
-│   │   ├── pdf.ts                 # Generador de PDFs
-│   │   ├── utils.ts               # Utilidades generales
-│   │   ├── modules.ts             # Lógica de módulos activos
-│   │   ├── pricing-engine.ts      # Motor de cálculo de precios
-│   │   ├── finance-engine.ts      # Cálculos financieros
-│   │   └── validations/           # Zod schemas
-│   │       ├── lead.ts
-│   │       ├── cotizacion.ts
-│   │       ├── producto.ts
+│   │   ├── db.ts                      # Prisma client singleton
+│   │   ├── auth.ts                    # Auth helpers + middleware
+│   │   ├── utils.ts                   # Utilidades generales
+│   │   ├── ai/                        # ── Motor IA ──
+│   │   │   ├── client.ts             # Claude API client
+│   │   │   ├── prompts.ts            # Prompts por feature
+│   │   │   ├── email-generator.ts    # Generación de emails
+│   │   │   ├── deal-scorer.ts        # Scoring de deals
+│   │   │   ├── meeting-summarizer.ts # Resumen de reuniones
+│   │   │   ├── price-advisor.ts      # Sugerencias de precio
+│   │   │   └── action-suggester.ts   # Próxima acción
+│   │   ├── sequences/                 # ── Motor de Secuencias ──
+│   │   │   ├── engine.ts             # Ejecutor de secuencias
+│   │   │   └── templates.ts          # Plantillas predefinidas
+│   │   ├── pricing-engine.ts          # Motor de cálculo de precios
+│   │   ├── finance-engine.ts          # Cálculos financieros
+│   │   ├── forecast-engine.ts         # Motor de forecast
+│   │   ├── email.ts                   # Resend client
+│   │   ├── pdf.ts                     # Generador de PDFs
+│   │   └── validations/              # Zod schemas
+│   │       ├── account.ts
+│   │       ├── contact.ts
+│   │       ├── deal.ts
+│   │       ├── quote.ts
+│   │       ├── product.ts
 │   │       ├── transaction.ts
 │   │       └── pricing.ts
 │   │
-│   ├── hooks/                     # Custom React hooks
-│   │   ├── use-leads.ts
+│   ├── hooks/
+│   │   ├── use-accounts.ts
+│   │   ├── use-deals.ts
 │   │   ├── use-forecast.ts
-│   │   ├── use-module.ts          # Hook para verificar módulo activo
+│   │   ├── use-ai.ts                  # Hook genérico para llamadas IA
 │   │   └── use-pricing.ts
 │   │
 │   └── types/
-│       └── index.ts               # Tipos compartidos
+│       └── index.ts
 │
 ├── public/
 │   └── logo.svg
@@ -403,197 +550,245 @@ os-comercial-ia-pymes/
 
 ---
 
-## 6. Lógica SaaS Multi-Tenant
+## 6. Lógica Multi-Tenant
 
-### 6.1 Aislamiento de Datos
-
+### Aislamiento de datos
 ```
-Estrategia: Schema compartido + tenantId en cada tabla
+Estrategia: Schema compartido + tenantId + RLS
 
-┌──────────────────────────────────────────┐
-│              PostgreSQL                  │
-│                                          │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐   │
-│  │Tenant A │ │Tenant B │ │Tenant C │   │
-│  │tenantId │ │tenantId │ │tenantId │   │
-│  │= "abc"  │ │= "def"  │ │= "ghi"  │   │
-│  └─────────┘ └─────────┘ └─────────┘   │
-│                                          │
-│  Mismas tablas, filtradas por tenantId   │
-│  + Row Level Security de PostgreSQL      │
-└──────────────────────────────────────────┘
+Cada tabla tiene tenantId (FK).
+Prisma middleware inyecta automáticamente:
+  - WHERE tenantId = X en cada query
+  - tenantId = X en cada INSERT
+
+PostgreSQL RLS como segunda capa de seguridad.
 ```
 
-### 6.2 Control de Módulos
-
+### Límites por plan
 ```typescript
-// Cada tenant tiene módulos habilitados según su plan
-// Middleware verifica acceso antes de renderizar
-
-Plan FREE    → [CRM]
-Plan STARTER → [CRM, QUOTES]
-Plan PRO     → [CRM, QUOTES, FINANCE, PRICING]
-Plan PREMIUM → [CRM, QUOTES, FINANCE, PRICING, AI]
-
-// module-guard.tsx verifica en cada página:
-// 1. ¿El tenant tiene este módulo activo?
-// 2. ¿El usuario tiene el rol necesario?
-// 3. Si no → redirect a upgrade page
+// Los planes limitan por ESCALA, no por features
+const PLAN_LIMITS = {
+  STARTER: {
+    seats: 3,          // usuarios
+    accounts: 100,     // cuentas
+    deals: 200,        // deals activos
+    aiCalls: 100,      // llamadas IA / mes
+    sequences: 3,      // secuencias activas
+    storage: '1GB',
+  },
+  GROWTH: {
+    seats: 10,
+    accounts: 500,
+    deals: 1000,
+    aiCalls: 500,
+    sequences: 10,
+    storage: '5GB',
+  },
+  SCALE: {
+    seats: 'unlimited',
+    accounts: 'unlimited',
+    deals: 'unlimited',
+    aiCalls: 2000,
+    sequences: 'unlimited',
+    storage: '20GB',
+  }
+}
 ```
 
-### 6.3 Flujo de Autenticación
-
+### Flujo de autenticación
 ```
-1. Usuario se registra → crea Tenant + User (ADMIN)
-2. Admin invita usuarios → se crean con tenantId del admin
-3. Login → JWT con { userId, tenantId, role, plan }
-4. Cada request → middleware extrae tenantId
-5. Queries → WHERE tenantId = :tenantId (automático via Prisma middleware)
-6. Módulos → verificación en middleware + UI condicional
+1. Registro → Wizard de onboarding → Crea Tenant + User (ADMIN)
+2. Admin invita equipo → Users con mismo tenantId
+3. Login → JWT { userId, tenantId, role, plan }
+4. Middleware → tenantId en cada request + verificar límites
+5. Prisma middleware → inyecta tenantId automáticamente
 ```
 
 ---
 
-## 7. Roadmap por Fases
+## 7. Pricing Strategy (Revisado para B2B LATAM)
 
-### FASE 1 — Fundación + CRM MVP (Semana 1-2)
-> Objetivo: App funcional con CRM básico
+### Problema con el modelo anterior
+- **Free tier atrae clientes poco serios** → soporte sin revenue
+- **Modularización fragmenta** → clientes compran solo 1 pedazo, ticket bajo
+- **LATAM B2B necesita ticket razonable** → entre $50-200 USD es el sweet spot
 
-- [ ] Setup: Next.js + Prisma + Supabase + Tailwind + shadcn/ui
-- [ ] Auth: registro, login, middleware, roles
-- [ ] Multi-tenancy: modelo Tenant, Prisma middleware, RLS
-- [ ] Layout: sidebar, header, navegación, responsive
-- [ ] CRM: CRUD leads, tabla con filtros
-- [ ] Pipeline: Kanban visual con drag & drop
-- [ ] Timeline: actividades por lead
+### Nuevo modelo: Todo incluido, escala por uso
 
-**Entregable:** Un usuario puede registrarse, crear leads y moverlos en un pipeline.
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     PRICING OS COMERCIAL IA                     │
+├─────────────┬──────────────────┬──────────────────┬────────────┤
+│             │    STARTER       │     GROWTH       │   SCALE    │
+│             │   $49 USD/mes    │   $99 USD/mes    │ $199 USD/m │
+├─────────────┼──────────────────┼──────────────────┼────────────┤
+│ Usuarios    │ Hasta 3          │ Hasta 10         │ Ilimitados │
+│ Cuentas     │ Hasta 100        │ Hasta 500        │ Ilimitadas │
+│ Deals       │ Hasta 200        │ Hasta 1,000      │ Ilimitados │
+├─────────────┼──────────────────┼──────────────────┼────────────┤
+│ CRM B2B     │ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
+│ Pipeline    │ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
+│ Seguimiento │ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
+│ Secuencias  │ 3 activas        │ 10 activas       │ Ilimitadas │
+│ Cotizaciones│ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
+│ Pricing Int.│ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
+│ Finanzas    │ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
+│ Forecast    │ Básico           │ ✅ Completo      │ ✅ Avanzado│
+├─────────────┼──────────────────┼──────────────────┼────────────┤
+│ IA Emails   │ 50/mes           │ 300/mes          │ 1,500/mes  │
+│ IA Scoring  │ ✅               │ ✅               │ ✅         │
+│ IA Insights │ ❌               │ ✅               │ ✅         │
+│ IA Pricing  │ ❌               │ ✅               │ ✅         │
+├─────────────┼──────────────────┼──────────────────┼────────────┤
+│ Soporte     │ Email            │ Email + Chat     │ Prioritario│
+│ Onboarding  │ Self-service     │ Guiado           │ Dedicado   │
+└─────────────┴──────────────────┴──────────────────┴────────────┘
 
-### FASE 2 — Cotizaciones + Catálogo (Semana 2-3)
-> Objetivo: Generar cotizaciones profesionales
+                        Trial: 14 días gratis (plan Growth)
+                        Pago anual: 20% descuento
+```
 
+### Por qué este modelo funciona para LATAM B2B
+
+| Decisión | Razón |
+|----------|-------|
+| **Sin plan Free** | Elimina tire-kickers. 14 días de trial es suficiente para probar |
+| **Todo incluido** | No fragmenta. El cliente percibe valor completo desde día 1 |
+| **Escala por uso** | Natural: pagas más cuando creces. No penaliza al pequeño |
+| **$49 entrada** | Accesible para PYMEs LATAM. Comparable a HubSpot Starter |
+| **$199 techo** | Competitivo vs soluciones enterprise ($500+). Alto margen |
+| **IA limitada por plan** | Controla costos de API. El que más usa IA, más paga |
+| **Trial en Growth** | El cliente prueba el producto "bueno", no el limitado |
+
+### Productos standalone (para marketing)
+
+Los módulos Financiero y Pricing pueden usarse como **landing pages de entrada**:
+
+```
+Landing "Control Financiero Comercial" → lead magnet
+  → Trial del OS Comercial completo
+  → Conversión a Starter/Growth
+
+Landing "Calculadora de Precios" → herramienta gratuita limitada
+  → Captura email
+  → Trial del OS Comercial completo
+```
+
+No se venden por separado — son **puertas de entrada** al producto completo.
+
+---
+
+## 8. Roadmap (Reestructurado — IA desde día 1)
+
+### FASE 1 — Fundación + Motor Comercial B2B (Semana 1-2)
+> Objetivo: Sistema B2B funcional con IA integrada
+
+**Infraestructura:**
+- [ ] Setup Next.js 14 + TypeScript + Prisma + Supabase
+- [ ] Tailwind + shadcn/ui + theme base
+- [ ] Auth: registro, login, onboarding wizard
+- [ ] Multi-tenancy: modelo, middleware, RLS
+- [ ] Layout: sidebar (Vender/Cotizar/Controlar), header, responsive
+- [ ] Integración base Claude API (lib/ai/client.ts)
+
+**Motor Comercial (Vender):**
+- [ ] CRUD Cuentas (Account) + perfil empresa
+- [ ] CRUD Contactos por cuenta (con roles)
+- [ ] CRUD Deals (oportunidades)
+- [ ] Pipeline Kanban con drag & drop
+- [ ] Timeline de actividades por deal
+- [ ] **IA: Generación de email de seguimiento** ← IA desde día 1
+- [ ] **IA: Sugerencia de próxima acción** ← IA desde día 1
+
+**Entregable:** Un vendedor puede gestionar cuentas B2B, mover deals en pipeline, y recibir sugerencias de IA.
+
+### FASE 2 — Seguimiento Inteligente + Cotizaciones (Semana 2-3)
+> Objetivo: Automatización de seguimiento + propuestas profesionales
+
+**Seguimiento:**
+- [ ] Recordatorios inteligentes (próximo follow-up)
+- [ ] Secuencias comerciales (crear, activar, pausar)
+- [ ] Motor de ejecución de secuencias (cron)
+- [ ] **IA: Emails dinámicos en secuencias**
+- [ ] **IA: Resumen de notas de reunión → action items**
+
+**Cotizaciones:**
 - [ ] Catálogo de productos/servicios
-- [ ] Constructor de cotizaciones (items, cantidades, descuentos)
-- [ ] Preview en pantalla con branding
-- [ ] Export PDF profesional
-- [ ] Estados de cotización + historial
-- [ ] Vincular cotización a lead
+- [ ] Constructor de cotizaciones con items + descuentos
+- [ ] Preview con branding + export PDF
+- [ ] Versionado de cotizaciones
+- [ ] Vinculación deal → cotización
 
-**Entregable:** Un vendedor puede crear y enviar cotizaciones en PDF.
+**Entregable:** Seguimiento automático funcionando + cotizaciones profesionales.
 
-### FASE 3 — Control Financiero (Semana 3-4)
-> Objetivo: Módulo de finanzas comercializable
+### FASE 3 — Pricing Inteligente + Control Financiero (Semana 3-4)
+> Objetivo: Módulos de valor alto (lo que justifica el pricing)
 
-- [ ] CRUD de transacciones (ingresos/gastos)
-- [ ] Dashboard: ingresos vs gastos, utilidad, margen
-- [ ] Control mensual con comparativo
-- [ ] Cuentas por cobrar + alertas de mora
-- [ ] Métricas por cliente y por proyecto
-- [ ] Rentabilidad por vendedor
-
-**Entregable:** Dashboard financiero funcional, comercializable como producto separado.
-
-### FASE 4 — Calculadora de Precios (Semana 4-5)
-> Objetivo: Módulo de pricing comercializable
-
-- [ ] Formulario de costos (personales + negocio)
-- [ ] Cálculo automático: tarifa mínima + recomendada
+**Pricing:**
+- [ ] Configuración de costos (personal + negocio)
+- [ ] Cálculo tarifa mínima + recomendada
 - [ ] Simulador de proyectos
-- [ ] Reglas por segmento de cliente
-- [ ] Factores de complejidad
-- [ ] Integración con cotizaciones (auto-pricing)
+- [ ] Reglas por segmento + complejidad
+- [ ] **IA: Sugerencia de precio óptimo**
+- [ ] Integración pricing ↔ cotizaciones
 
-**Entregable:** Calculadora de precios funcional, comercializable como producto separado.
+**Finanzas:**
+- [ ] CRUD transacciones (ingresos/gastos)
+- [ ] Dashboard: ingresos vs gastos, utilidad, margen
+- [ ] Cuentas por cobrar + alertas
+- [ ] Métricas por cliente y por vendedor
+- [ ] **IA: Alertas de anomalías en cobros**
 
-### FASE 5 — IA + Automatización (Semana 5-6)
-> Objetivo: Inteligencia artificial como diferenciador
+**Entregable:** Sistema de pricing + control financiero integrados.
 
-- [ ] Integración Claude API
-- [ ] Generación de emails de seguimiento
-- [ ] Lead scoring automático
-- [ ] Sugerencias de productos en cotizaciones
-- [ ] Sugerencia de precio óptimo (IA)
-- [ ] Resumen automático de notas de reunión
+### FASE 4 — Forecast + Scoring + Dashboard Ejecutivo (Semana 4-5)
+> Objetivo: Inteligencia comercial completa
 
-**Entregable:** Funcionalidades IA activas en todos los módulos.
+**Forecast:**
+- [ ] Pipeline forecast (etapa × probabilidad × monto)
+- [ ] Forecast por vendedor
+- [ ] Forecast mensual/trimestral con histórico
+- [ ] Embudo visual con tasas de conversión
 
-### FASE 6 — Dashboard, Forecast & Demo (Semana 6-7)
-> Objetivo: Dashboard completo + listo para demo comercial
+**IA avanzada:**
+- [ ] **IA: Deal scoring automático**
+- [ ] **IA: Health score de cuentas**
+- [ ] **IA: Confianza del forecast**
+- [ ] **IA: Insights de rentabilidad**
+- [ ] Dashboard con panel IA (insights del negocio)
 
-- [ ] Dashboard ejecutivo con KPIs consolidados
-- [ ] Embudo de ventas visual
-- [ ] Forecast mensual (probabilidad × monto)
-- [ ] Forecast financiero (proyección basada en pipeline)
-- [ ] Seed con datos de demo realistas
-- [ ] Landing page / onboarding
-- [ ] Flujo de upgrade de plan
+**Entregable:** Dashboard ejecutivo con forecast serio e insights IA.
 
-**Entregable:** Producto demo-ready para presentar a clientes potenciales.
+### FASE 5 — Polish + Demo Comercial (Semana 5-6)
+> Objetivo: Producto demo-ready, listo para primeros clientes
 
----
+- [ ] Seed con datos de demo B2B realistas
+- [ ] Onboarding wizard pulido
+- [ ] Landing page con propuesta de valor
+- [ ] Flujo de trial → upgrade
+- [ ] Responsive mobile
+- [ ] Performance optimization
+- [ ] Error handling + edge cases
 
-## 8. Estrategia de Comercialización SaaS
-
-### 8.1 Empaquetado de Módulos
-
-```
-Producto 1: "CRM Comercial"
-  → Módulo CRM + Pipeline + Seguimiento
-  → Plan Free / Starter
-
-Producto 2: "Control Financiero Comercial"
-  → Módulo Finanzas standalone
-  → Puede venderse sin CRM
-  → $29-49/mes
-
-Producto 3: "Calculadora Inteligente de Precios"
-  → Módulo Pricing standalone
-  → Puede venderse sin CRM
-  → $19-39/mes
-
-Producto 4: "OS Comercial Completo"
-  → Todos los módulos + IA
-  → $79-149/mes
-
-Producto 5: "IA Engine" (add-on)
-  → Se agrega a cualquier plan
-  → $30-50/mes adicional
-```
-
-### 8.2 Modelo de Crecimiento
-
-```
-Etapa 1: Regalar CRM básico (Free) → captar usuarios
-Etapa 2: Monetizar con Cotizaciones (Starter) → primer ingreso
-Etapa 3: Upsell con Finanzas + Pricing (Pro) → ticket promedio alto
-Etapa 4: IA como diferenciador (Premium) → retención y lock-in
-```
-
-### 8.3 Métricas Clave a Trackear
-
-- **Activación**: % de usuarios que crean su primer lead
-- **Conversión**: Free → Paid
-- **Upsell**: Starter → Pro → Premium
-- **Retención**: Churn mensual por plan
-- **Revenue**: MRR, ARPU, LTV
+**Entregable:** Producto listo para demostrar a clientes potenciales.
 
 ---
 
-## 9. Decisiones Técnicas Clave
+## 9. Decisiones Técnicas
 
-| Decisión | Elección | Alternativa | Razón |
-|----------|----------|-------------|-------|
-| Arquitectura | **Monolito modular** | Microservicios | MVP rápido, un deploy |
-| API | **REST (API Routes)** | tRPC / GraphQL | Simple, suficiente para MVP |
-| ORM | **Prisma** | Drizzle | Más maduro, mejor DX |
-| Auth | **Supabase Auth** | NextAuth | Auth + DB + Storage en uno |
-| DB hosting | **Supabase** | Neon, PlanetScale | Todo-en-uno, RLS nativo |
-| IA | **Claude API** | OpenAI | Superior en español, contexto largo |
-| PDF | **@react-pdf/renderer** | Puppeteer | Funciona en serverless |
-| Charts | **Recharts** | Chart.js, Tremor | React nativo, declarativo |
-| Multi-tenant | **Schema compartido + tenantId** | Schema por tenant | Simple, escalable hasta ~10k tenants |
-| Feature flags | **DB (ModuleConfig)** | LaunchDarkly | Sin dependencia externa |
-| Payments | **Stripe** (futuro) | Lemonsqueezy | Standard de la industria |
+| Decisión | Elección | Razón |
+|----------|----------|-------|
+| Arquitectura | **Monolito modular** | MVP rápido, un deploy |
+| API style | **REST + Server Actions** | Simple, suficiente |
+| ORM | **Prisma** | Type-safe, migraciones, maduro |
+| Auth | **Supabase Auth** | Todo-en-uno con DB |
+| DB | **PostgreSQL (Supabase)** | RLS nativo, relacional |
+| IA | **Claude API** | Superior en español, contexto largo |
+| Jobs/Cron | **Vercel Cron + Inngest** | Secuencias, recordatorios |
+| PDF | **@react-pdf/renderer** | Serverless-compatible |
+| Charts | **Recharts** | React nativo, declarativo |
+| Multi-tenant | **tenantId + RLS** | Simple, escala bien |
+| Payments | **Stripe** | Standard, funciona en LATAM |
 
 ---
 
@@ -615,7 +810,7 @@ ANTHROPIC_API_KEY=
 RESEND_API_KEY=
 EMAIL_FROM=notificaciones@tudominio.com
 
-# Stripe (futuro)
+# Stripe
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
@@ -623,4 +818,8 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 # App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME="OS Comercial IA"
+
+# Inngest (sequences/cron)
+INNGEST_EVENT_KEY=
+INNGEST_SIGNING_KEY=
 ```
