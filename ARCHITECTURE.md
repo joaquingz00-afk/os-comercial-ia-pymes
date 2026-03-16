@@ -1,31 +1,60 @@
-# OS Comercial con IA para PYMEs — Arquitectura v3
+# OS Comercial con IA para PYMEs — Arquitectura v4 (Final)
 
 ## 1. Posicionamiento del Producto
 
+### Nombre comercial
+**OS Comercial IA** — Motor Comercial B2B con Inteligencia Artificial
+
 ### Qué NO somos
-- No somos "otro CRM con IA"
-- No somos un sistema genérico de contactos
-- No somos una herramienta modular donde compras piezas sueltas
+- No somos "otro CRM" — no gestionamos contactos, **ejecutamos ventas**
+- No somos software de gestión genérico — somos **específicos para equipos comerciales B2B**
+- No somos una herramienta de registro — somos un **motor de ejecución con IA**
 
 ### Qué SÍ somos
-**El sistema operativo comercial para equipos de ventas B2B en LATAM.**
+**El motor de ejecución comercial para equipos de ventas B2B en LATAM.**
 
-Un solo producto que cubre el ciclo comercial completo:
-
+La diferencia entre un CRM y un motor comercial:
 ```
-PROSPECCIÓN → SEGUIMIENTO → PROPUESTA → CIERRE → RENTABILIDAD
-     ↑              ↑            ↑          ↑          ↑
-    IA            IA           IA         IA         IA
-  (scoring)   (emails)    (pricing)  (forecast)  (análisis)
+CRM tradicional:        Registro → Datos → Reportes → "¿Y ahora qué?"
+Motor Comercial IA:     Ejecución → Acción → Resultado → IA dice qué sigue
 ```
 
-La IA no es un módulo aparte — está integrada en cada paso del proceso comercial.
+El sistema prioriza **acción sobre registro**:
+
+```
+PROSPECTAR → EJECUTAR SEGUIMIENTO → PROPONER → CERRAR → CONTROLAR
+     ↑              ↑                   ↑          ↑          ↑
+    IA            IA                  IA         IA         IA
+ (scoring)  (emails, tareas,     (pricing)  (forecast)  (análisis)
+            agenda, llamadas)
+```
+
+### Experiencia central del usuario
+Al abrir el sistema, el vendedor NO ve una lista de contactos.
+Ve su **Agenda Comercial del día**:
+
+```
+┌─────────────────────────────────────────────────┐
+│  Buenos días, Carlos.         Lunes 17 de marzo │
+│                                                  │
+│  HOY TIENES:                                     │
+│  ├── 3 follow-ups pendientes                     │
+│  ├── 1 reunión (Acme Corp, 11:00)               │
+│  ├── 2 cotizaciones por enviar                   │
+│  └── 1 deal que necesita atención               │
+│                                                  │
+│  💡 IA sugiere: "Contactar a María de TechCo,    │
+│     llevan 7 días sin actividad y el deal es     │
+│     de alto valor"                               │
+└─────────────────────────────────────────────────┘
+```
 
 ### Diferenciadores clave
-1. **B2B-first**: Cuentas con múltiples contactos, ciclos largos, deals complejos
-2. **IA nativa**: No es un add-on, es parte del flujo desde el día 1
-3. **LATAM-ready**: Español nativo, monedas locales, lógica fiscal regional
-4. **Ciclo completo**: De la prospección a la rentabilidad en un solo sistema
+1. **Ejecución, no registro** — El sistema empuja al vendedor a actuar, no solo a anotar
+2. **B2B nativo** — Cuentas con múltiples contactos, ciclos largos, deals complejos
+3. **IA integrada** — No es un botón, es parte del flujo en cada pantalla
+4. **LATAM-ready** — Español nativo, monedas locales, contexto regional
+5. **Agenda-first** — El vendedor abre el sistema y sabe exactamente qué hacer hoy
 
 ---
 
@@ -71,15 +100,18 @@ La IA no es un módulo aparte — está integrada en cada paso del proceso comer
 │  │  Auth · Multi-tenant · Roles · Configuración · IA   │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                                                             │
-│  ┌───────────┐ ┌──────────────┐ ┌────────────────────┐    │
-│  │  VENDER   │ │  COTIZAR     │ │  CONTROLAR         │    │
-│  │           │ │              │ │                    │    │
-│  │ Cuentas   │ │ Catálogo     │ │ Dashboard Fin.    │    │
-│  │ Contactos │ │ Cotizaciones │ │ Rentabilidad      │    │
-│  │ Pipeline  │ │ PDF Export   │ │ Forecast          │    │
-│  │ Seguim.   │ │ Pricing Int. │ │ Cuentas x Cobrar  │    │
-│  │ Secuencias│ │ Simulador    │ │ Por vendedor      │    │
-│  └───────────┘ └──────────────┘ └────────────────────┘    │
+│  ┌───────────────┐ ┌──────────────┐ ┌─────────────────┐  │
+│  │    VENDER     │ │   COTIZAR    │ │   CONTROLAR     │  │
+│  │               │ │              │ │                 │  │
+│  │ Agenda Comerc.│ │ Catálogo     │ │ Dashboard Fin.  │  │
+│  │ Cuentas       │ │ Cotizaciones │ │ Rentabilidad    │  │
+│  │ Contactos     │ │ PDF Export   │ │ Forecast        │  │
+│  │ Pipeline/Deals│ │ Pricing Int. │ │ Cuentas x Cobrar│  │
+│  │ Tareas        │ │ Simulador    │ │ Por vendedor    │  │
+│  │ Llamadas      │ │              │ │                 │  │
+│  │ Notas/Reunión │ │              │ │                 │  │
+│  │ Secuencias    │ │              │ │                 │  │
+│  └───────────────┘ └──────────────┘ └─────────────────┘  │
 │                                                             │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │              CAPA IA (TRANSVERSAL)                  │   │
@@ -105,19 +137,29 @@ Request → Auth middleware → tenantId del JWT
   → RLS PostgreSQL filtra automáticamente
 ```
 
-### 3.2 MÓDULO: VENDER (Motor Comercial B2B)
+### 3.2 MÓDULO: VENDER (Motor de Ejecución Comercial B2B)
 
-Este es el corazón del sistema. **No es un CRM — es un motor de ventas B2B.**
+Este es el corazón del sistema. **No es un CRM — es un motor de ejecución de ventas.**
+
+#### Agenda Comercial (pantalla principal del vendedor)
+| Feature | Descripción |
+|---------|-------------|
+| Vista diaria | "Hoy tienes: 3 follow-ups, 1 reunión, 2 cotizaciones pendientes" |
+| Tareas pendientes | Lista priorizada de acciones del día |
+| Recordatorios | Alertas de follow-ups vencidos o próximos |
+| Sugerencias IA | "Contactar a X, llevan Y días sin actividad" |
+| Vista semanal | Calendario con reuniones, llamadas programadas, deadlines |
 
 #### Cuentas (Account-Based)
 | Feature | Descripción |
 |---------|-------------|
 | Cuentas (empresas) | Entidad principal. Una empresa = una cuenta |
-| Múltiples contactos | Cada cuenta tiene N contactos con roles (decisor, influenciador, usuario, champion) |
+| Múltiples contactos | Cada cuenta tiene N contactos con roles (decisor, influenciador, champion, blocker) |
 | Perfil de cuenta | Industria, tamaño, segmento, revenue estimado |
-| Health score | Indicador de salud de la relación (IA) |
+| Health score | Indicador de salud de la relación (calculado por IA) |
+| Timeline completo | Todo lo que pasó con esta cuenta: llamadas, emails, reuniones, notas, deals |
 
-#### Pipeline de Oportunidades
+#### Pipeline de Oportunidades (Deals)
 | Feature | Descripción |
 |---------|-------------|
 | Oportunidades (Deals) | Cada deal tiene monto, probabilidad, fecha estimada de cierre |
@@ -125,15 +167,24 @@ Este es el corazón del sistema. **No es un CRM — es un motor de ventas B2B.**
 | Múltiples deals por cuenta | Una cuenta puede tener varios deals en paralelo |
 | Razón de pérdida | Tracking de por qué se pierden deals |
 | Weighted pipeline | Valor ponderado = monto × probabilidad |
+| Timeline por deal | Historial específico de actividades del deal |
 
-#### Seguimiento Inteligente (IA desde día 1)
+#### Ejecución Comercial (tareas, llamadas, notas, reuniones)
 | Feature | Descripción |
 |---------|-------------|
-| Timeline | Historial completo: llamadas, emails, reuniones, notas |
+| Tareas | Crear tareas vinculadas a deal/cuenta, con fecha límite y prioridad |
+| Registro de llamadas | Registrar llamada: duración, resultado (contestó/no contestó/buzón), notas |
+| Notas de reunión | Texto libre + IA extrae action items y próximos pasos |
+| Registro de emails | Log de emails enviados (manuales o automáticos) |
+| Timeline unificado | Vista cronológica de TODA la actividad (cuenta o deal) |
+| Filtros de actividad | Filtrar por tipo: solo llamadas, solo emails, solo reuniones |
+
+#### Seguimiento Inteligente (IA)
+| Feature | Descripción |
+|---------|-------------|
 | Recordatorios inteligentes | IA sugiere cuándo y cómo hacer follow-up |
 | Secuencias comerciales | Cadenas automáticas: email día 1 → reminder día 3 → llamada día 7 |
 | Emails IA | Generación de emails personalizados según contexto del deal |
-| Resumen de reuniones | Pegar notas → IA extrae action items y próximos pasos |
 | Sugerencia de próxima acción | "Este deal lleva 5 días sin actividad. Sugiero: [acción]" |
 
 ### 3.3 MÓDULO: COTIZAR (Propuestas + Pricing Inteligente)
@@ -262,15 +313,22 @@ Tenant (organización que usa el sistema)
 │   ├── assignedToId → User (vendedor)
 │   └── tenantId (FK)
 │
-├── Activity (timeline de interacciones)
+├── Activity (timeline unificado de interacciones)
 │   ├── id, type (CALL|EMAIL|MEETING|NOTE|TASK|SEQUENCE_STEP)
-│   ├── title, description, date
-│   ├── outcome (COMPLETED|NO_ANSWER|RESCHEDULED|CANCELLED)
-│   ├── nextFollowUp (date)
-│   ├── aiGenerated (boolean — ¿fue generada por IA?)
+│   ├── title, description
+│   ├── date (cuándo ocurrió/ocurrirá)
+│   ├── dueDate (fecha límite, para tareas)
+│   ├── priority (LOW|MEDIUM|HIGH|URGENT, para tareas)
+│   ├── status (PENDING|COMPLETED|CANCELLED|OVERDUE)
+│   ├── outcome (CONNECTED|NO_ANSWER|VOICEMAIL|RESCHEDULED, para llamadas)
+│   ├── duration (minutos, para llamadas/reuniones)
+│   ├── nextFollowUp (date, sugerido por IA o manual)
+│   ├── aiGenerated (boolean — ¿fue creada por IA?)
+│   ├── aiSummary (texto — resumen IA de notas de reunión)
 │   ├── dealId (FK, opcional), accountId (FK), contactId (FK, opcional)
-│   ├── userId (FK)
-│   └── metadata (JSON)
+│   ├── userId (FK — quién ejecutó/creó)
+│   ├── assignedToId (FK — a quién se le asigna, para tareas)
+│   └── metadata (JSON — datos extra flexibles)
 │
 ├── Sequence (secuencias comerciales automáticas) ← NUEVO
 │   ├── id, name, description
@@ -369,12 +427,12 @@ os-comercial-ia-pymes/
 │   │   │
 │   │   ├── (dashboard)/               # === RUTAS PROTEGIDAS ===
 │   │   │   ├── layout.tsx             # Sidebar + header
-│   │   │   ├── page.tsx               # Dashboard ejecutivo
+│   │   │   ├── page.tsx               # AGENDA COMERCIAL (home del vendedor)
 │   │   │   │
 │   │   │   ├── cuentas/               # ── VENDER: Cuentas ──
 │   │   │   │   ├── page.tsx                   # Lista de cuentas
 │   │   │   │   └── [id]/
-│   │   │   │       ├── page.tsx               # Detalle cuenta
+│   │   │   │       ├── page.tsx               # Detalle + timeline completo
 │   │   │   │       ├── contactos/page.tsx     # Contactos de la cuenta
 │   │   │   │       └── deals/page.tsx         # Deals de la cuenta
 │   │   │   │
@@ -382,8 +440,9 @@ os-comercial-ia-pymes/
 │   │   │   │   ├── page.tsx                   # Pipeline Kanban
 │   │   │   │   └── [id]/page.tsx              # Detalle deal + timeline
 │   │   │   │
-│   │   │   ├── seguimiento/           # ── VENDER: Seguimiento ──
-│   │   │   │   ├── page.tsx                   # Tareas pendientes hoy
+│   │   │   ├── actividades/           # ── VENDER: Ejecución ──
+│   │   │   │   ├── page.tsx                   # Tareas + llamadas del día
+│   │   │   │   ├── agenda/page.tsx            # Vista semanal/calendario
 │   │   │   │   └── secuencias/page.tsx        # Gestión de secuencias
 │   │   │   │
 │   │   │   ├── cotizaciones/          # ── COTIZAR ──
@@ -455,10 +514,16 @@ os-comercial-ia-pymes/
 │   │   │   ├── deal-timeline.tsx
 │   │   │   └── deal-ai-panel.tsx      # Panel IA: score, sugerencias
 │   │   │
-│   │   ├── seguimiento/              # Componentes de Seguimiento
-│   │   │   ├── activity-form.tsx
-│   │   │   ├── sequence-builder.tsx
-│   │   │   ├── reminder-list.tsx
+│   │   ├── actividades/              # Componentes de Ejecución Comercial
+│   │   │   ├── agenda-diaria.tsx      # Vista "tu día" con todo pendiente
+│   │   │   ├── agenda-semanal.tsx     # Vista calendario semanal
+│   │   │   ├── task-form.tsx          # Crear/editar tarea
+│   │   │   ├── call-log-form.tsx      # Registrar llamada
+│   │   │   ├── meeting-notes.tsx      # Notas de reunión + resumen IA
+│   │   │   ├── timeline.tsx           # Timeline unificado (reutilizable)
+│   │   │   ├── activity-filters.tsx   # Filtrar por tipo de actividad
+│   │   │   ├── sequence-builder.tsx   # Constructor de secuencias
+│   │   │   ├── reminder-list.tsx      # Lista de recordatorios
 │   │   │   └── ai-email-composer.tsx  # Compositor de emails con IA
 │   │   │
 │   │   ├── cotizaciones/
@@ -606,82 +671,84 @@ const PLAN_LIMITS = {
 
 ---
 
-## 7. Pricing Strategy (Revisado para B2B LATAM)
+## 7. Pricing Strategy (Hipótesis — validar con piloto)
 
-### Problema con el modelo anterior
-- **Free tier atrae clientes poco serios** → soporte sin revenue
-- **Modularización fragmenta** → clientes compran solo 1 pedazo, ticket bajo
-- **LATAM B2B necesita ticket razonable** → entre $50-200 USD es el sweet spot
+> **NOTA**: Estos precios son hipótesis iniciales. Se validarán con los primeros
+> 10-15 pilotos antes de fijar estructura definitiva. Lo importante es que la
+> arquitectura técnica soporte cualquier modelo (por usuario, por features, mixto).
 
-### Nuevo modelo: Todo incluido, escala por uso
+### Principios de pricing (estos SÍ están validados)
+1. **Sin plan Free** → atrae tire-kickers en B2B, genera soporte sin revenue
+2. **Todo incluido** → no fragmentar features, el cliente percibe valor completo
+3. **Escalar por uso/equipo** → natural, no penaliza al pequeño
+4. **Trial generoso** → 14 días con producto completo para que prueben en serio
+5. **IA como parte del producto** → no como add-on, pero con límites por escala
+
+### Hipótesis de pricing (a validar)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     PRICING OS COMERCIAL IA                     │
+│              PRICING OS COMERCIAL IA (HIPÓTESIS v1)             │
 ├─────────────┬──────────────────┬──────────────────┬────────────┤
 │             │    STARTER       │     GROWTH       │   SCALE    │
-│             │   $49 USD/mes    │   $99 USD/mes    │ $199 USD/m │
+│             │  ~$49 USD/mes    │  ~$99 USD/mes    │ ~$199 USD/m│
+│             │  (a validar)     │  (a validar)     │ (a validar)│
 ├─────────────┼──────────────────┼──────────────────┼────────────┤
 │ Usuarios    │ Hasta 3          │ Hasta 10         │ Ilimitados │
 │ Cuentas     │ Hasta 100        │ Hasta 500        │ Ilimitadas │
 │ Deals       │ Hasta 200        │ Hasta 1,000      │ Ilimitados │
 ├─────────────┼──────────────────┼──────────────────┼────────────┤
-│ CRM B2B     │ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
-│ Pipeline    │ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
-│ Seguimiento │ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
-│ Secuencias  │ 3 activas        │ 10 activas       │ Ilimitadas │
-│ Cotizaciones│ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
-│ Pricing Int.│ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
+│ Motor Com.  │ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
+│ Cotizac.    │ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
 │ Finanzas    │ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
+│ Pricing Int.│ ✅ Completo      │ ✅ Completo      │ ✅ Completo│
 │ Forecast    │ Básico           │ ✅ Completo      │ ✅ Avanzado│
-├─────────────┼──────────────────┼──────────────────┼────────────┤
-│ IA Emails   │ 50/mes           │ 300/mes          │ 1,500/mes  │
-│ IA Scoring  │ ✅               │ ✅               │ ✅         │
-│ IA Insights │ ❌               │ ✅               │ ✅         │
-│ IA Pricing  │ ❌               │ ✅               │ ✅         │
+│ Secuencias  │ 3 activas        │ 10 activas       │ Ilimitadas │
+│ IA          │ Básica (50/mes)  │ Completa (500/m) │ Full (2k/m)│
 ├─────────────┼──────────────────┼──────────────────┼────────────┤
 │ Soporte     │ Email            │ Email + Chat     │ Prioritario│
-│ Onboarding  │ Self-service     │ Guiado           │ Dedicado   │
 └─────────────┴──────────────────┴──────────────────┴────────────┘
 
-                        Trial: 14 días gratis (plan Growth)
-                        Pago anual: 20% descuento
+           Trial: 14 días gratis (plan Growth, sin tarjeta)
+           Pago anual: ~20% descuento (a definir)
 ```
 
-### Por qué este modelo funciona para LATAM B2B
+### Qué validar en el piloto
 
-| Decisión | Razón |
-|----------|-------|
-| **Sin plan Free** | Elimina tire-kickers. 14 días de trial es suficiente para probar |
-| **Todo incluido** | No fragmenta. El cliente percibe valor completo desde día 1 |
-| **Escala por uso** | Natural: pagas más cuando creces. No penaliza al pequeño |
-| **$49 entrada** | Accesible para PYMEs LATAM. Comparable a HubSpot Starter |
-| **$199 techo** | Competitivo vs soluciones enterprise ($500+). Alto margen |
-| **IA limitada por plan** | Controla costos de API. El que más usa IA, más paga |
-| **Trial en Growth** | El cliente prueba el producto "bueno", no el limitado |
+| Pregunta | Cómo validar |
+|----------|-------------|
+| ¿$49 es accesible para PYMEs LATAM? | Entrevistas en piloto, tasa de conversión trial→paid |
+| ¿El salto $49→$99 es natural? | Tracking de cuándo piden más seats/cuentas |
+| ¿IA limitada genera upsell o frustración? | Feedback cualitativo + uso real de IA |
+| ¿Todo incluido es mejor que modular? | A/B test con early adopters |
+| ¿Pricing anual funciona en LATAM? | Preguntar preferencia de pago |
+| ¿Hay mercado para >$199? | Explorar enterprise con custom pricing |
 
-### Productos standalone (para marketing)
-
-Los módulos Financiero y Pricing pueden usarse como **landing pages de entrada**:
-
-```
-Landing "Control Financiero Comercial" → lead magnet
-  → Trial del OS Comercial completo
-  → Conversión a Starter/Growth
-
-Landing "Calculadora de Precios" → herramienta gratuita limitada
-  → Captura email
-  → Trial del OS Comercial completo
+### Implementación técnica del pricing
+```typescript
+// La DB soporta cualquier modelo — el plan se define en Tenant
+// Los límites se configuran en PLAN_LIMITS (fácil de cambiar)
+// El middleware verifica límites antes de cada operación
+// Esto permite pivotar pricing sin cambiar código
 ```
 
-No se venden por separado — son **puertas de entrada** al producto completo.
+### Estrategia de captación (lead magnets)
+
+Los módulos Financiero y Pricing funcionan como **puertas de entrada**:
+
+```
+Landing "Control Financiero Comercial" → lead magnet → Trial completo
+Landing "Calculadora de Precios"       → herramienta gratis limitada → Trial
+```
+
+No se venden por separado — son canales de adquisición para el producto completo.
 
 ---
 
 ## 8. Roadmap (Reestructurado — IA desde día 1)
 
-### FASE 1 — Fundación + Motor Comercial B2B (Semana 1-2)
-> Objetivo: Sistema B2B funcional con IA integrada
+### FASE 1 — Fundación + Motor de Ejecución Comercial (Semana 1-2)
+> Objetivo: Motor comercial B2B funcional con agenda, actividades e IA integrada
 
 **Infraestructura:**
 - [ ] Setup Next.js 14 + TypeScript + Prisma + Supabase
@@ -696,11 +763,22 @@ No se venden por separado — son **puertas de entrada** al producto completo.
 - [ ] CRUD Contactos por cuenta (con roles)
 - [ ] CRUD Deals (oportunidades)
 - [ ] Pipeline Kanban con drag & drop
-- [ ] Timeline de actividades por deal
-- [ ] **IA: Generación de email de seguimiento** ← IA desde día 1
-- [ ] **IA: Sugerencia de próxima acción** ← IA desde día 1
 
-**Entregable:** Un vendedor puede gestionar cuentas B2B, mover deals en pipeline, y recibir sugerencias de IA.
+**Ejecución Comercial (clave para adopción):**
+- [ ] Agenda Comercial como pantalla principal ("tu día")
+- [ ] Sistema de tareas (crear, asignar, completar, con prioridad y fecha)
+- [ ] Registro de llamadas (duración, resultado, notas)
+- [ ] Notas de reunión (texto libre)
+- [ ] Timeline unificado por cuenta y por deal
+- [ ] Recordatorios de follow-up (pendientes del día)
+- [ ] Filtros de actividad (por tipo, por fecha)
+
+**IA (desde día 1):**
+- [ ] **IA: Generación de email de seguimiento**
+- [ ] **IA: Sugerencia de próxima acción** ("contactar a X, llevan Y días sin actividad")
+- [ ] **IA: Resumen de notas de reunión** → action items automáticos
+
+**Entregable:** Un vendedor abre el sistema, ve su agenda del día, gestiona cuentas B2B, registra llamadas/notas, mueve deals en pipeline, y recibe sugerencias de IA.
 
 ### FASE 2 — Seguimiento Inteligente + Cotizaciones (Semana 2-3)
 > Objetivo: Automatización de seguimiento + propuestas profesionales
